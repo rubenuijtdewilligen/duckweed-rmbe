@@ -9,5 +9,4 @@ data/raw_images/*
 .Ruserdata
 .Rproj.user/
 
-node_modules/
-.env
+.venv
