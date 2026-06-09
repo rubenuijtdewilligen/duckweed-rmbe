@@ -1,0 +1,13 @@
+.DS_Store
+Thumbs.db
+
+data/raw_images/*
+!data/raw_images/.gitkeep
+
+.Rhistory
+.RData
+.Ruserdata
+.Rproj.user/
+
+node_modules/
+.env
