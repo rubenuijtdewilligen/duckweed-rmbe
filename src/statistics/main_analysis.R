@@ -44,6 +44,12 @@ plot_coverage <- ggplot(df_cover_summary, aes(x = days_since_start, y = Mean_Cov
 
 ggsave("output/plots/plot_coverage.png", plot = plot_coverage, width = 6, height = 4, dpi = 300)
 
+most_recent_day <- max(df_duckweed$days_since_start)
+df_latest <- df_duckweed %>% filter(days_since_start == most_recent_day)
+
+wilcox_bleach <- wilcox.test(bleaching_score ~ treatment, data = df_latest, exact = FALSE)
+print(wilcox_bleach)
+
 df_bleach_summary <- df_duckweed %>%
   group_by(treatment, days_since_start) %>%
   summarise(
