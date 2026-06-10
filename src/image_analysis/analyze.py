@@ -10,15 +10,15 @@ def calculate_duckweed_coverage(image_path, show_preview=True):
         print(f"Error: Could not load image '{image_path}'.")
         return None
 
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    lower_water = np.array([90, 90, 90])
+    upper_water = np.array([255, 255, 255])
+    
+    mask_water = cv2.inRange(img, lower_water, upper_water)
 
-    lower_green = np.array([34, 20, 25])    
-    upper_green = np.array([85, 255, 255])  
+    mask_plants = cv2.bitwise_not(mask_water)
 
-    mask = cv2.inRange(hsv, lower_green, upper_green)
-
-    total_pixels = mask.size
-    green_pixels = cv2.countNonZero(mask)
+    total_pixels = mask_plants.size
+    green_pixels = cv2.countNonZero(mask_plants)
     coverage_percent = (green_pixels / total_pixels) * 100
 
     print(f"{coverage_percent:.2f}%")
@@ -29,17 +29,16 @@ def calculate_duckweed_coverage(image_path, show_preview=True):
         max_dimension = 500
         h_orig, w_orig = img.shape[:2]
         scale_factor = max_dimension / h_orig if h_orig > w_orig else max_dimension / w_orig
-
         w_new = int(w_orig * scale_factor)
         h_new = int(h_orig * scale_factor)
 
-        preview_img = cv2.resize(img, (w_new, h_new))
-        preview_mask = cv2.resize(mask, (w_new, h_new))
+        preview_img = cv2.resize(img, (w_new, h_new), interpolation=cv2.INTER_AREA)
+        preview_mask = cv2.resize(mask_plants, (w_new, h_new), interpolation=cv2.INTER_AREA)
         preview_mask_3ch = cv2.cvtColor(preview_mask, cv2.COLOR_GRAY2BGR)
         
         combined_preview = np.hstack((preview_img, preview_mask_3ch))
 
-        window_title = f"{os.path.basename(image_path)} (Press any key to close)"
+        window_title = f"QC (RGB Water-Invert): {os.path.basename(image_path)}"
         cv2.imshow(window_title, combined_preview)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
