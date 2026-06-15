@@ -8,8 +8,8 @@ df_duckweed <- read_excel("data/daily_measurements.xlsx")
 df_duckweed <- df_duckweed %>%
   mutate(
     treatment = case_when(
-      container_id %in% c(3, 4) ~ "Low light intensity",
-      container_id %in% c(7, 8) ~ "High light intensity",
+      container_id %in% c(3, 4) ~ "High light intensity",
+      container_id %in% c(7, 8) ~ "Low light intensity",
       TRUE ~ "unknown"
     )
   )
