@@ -2,6 +2,7 @@
 Thumbs.db
 
 data/raw_images/*
+data/raw_images_for_factors/*
 !data/raw_images/.gitkeep
 data/~$daily_measurements.xlsx
 
