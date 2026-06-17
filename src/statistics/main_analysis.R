@@ -45,12 +45,21 @@ plot_coverage <- ggplot(df_cover_summary, aes(x = days_since_start, y = Mean_Cov
 ggsave("output/plots/plot_coverage.png", plot = plot_coverage, width = 6, height = 4, dpi = 300)
 
 most_recent_day <- max(df_duckweed$days_since_start)
-df_latest <- df_duckweed %>% filter(days_since_start == most_recent_day)
+df_latest <- df_duckweed %>% filter(days_since_start == most_recent_day, treatment != "unknown")
 
-wilcox_bleach <- wilcox.test(bleaching_score ~ treatment, data = df_latest, exact = FALSE)
-print(wilcox_bleach)
+group_count <- length(unique(df_latest$treatment))
+
+if (group_count == 2) {
+  wilcox_bleach <- wilcox.test(bleaching_score ~ treatment, data = df_latest, exact = FALSE)
+  print(wilcox_bleach)
+  p_bleach_text <- paste("P-value on day", most_recent_day, ":", round(wilcox_bleach$p.value, 4))
+} else {
+  print("Warning: Insufficient treatment levels on the final day for Wilcoxon test.")
+  p_bleach_text <- paste("P-value on day", most_recent_day, ": Not enough data")
+}
 
 df_bleach_summary <- df_duckweed %>%
+  filter(treatment != "unknown") %>%
   group_by(treatment, days_since_start) %>%
   summarise(
     Mean_Bleaching = mean(bleaching_score),
@@ -78,3 +87,39 @@ plot_bleaching <- ggplot(df_bleach_summary, aes(x = days_since_start, y = Mean_B
   theme(panel.grid.minor = element_blank())
 
 ggsave("output/plots/plot_bleaching.png", plot = plot_bleaching, width = 6, height = 4, dpi = 300)
+
+df_biomass <- read_excel("data/mass_difference.xlsx")
+
+df_biomass <- df_biomass %>%
+  mutate(
+    treatment = case_when(
+      treatment == "high_light" ~ "High light intensity",
+      treatment == "low_light" ~ "Low light intensity",
+      TRUE ~ treatment
+    )
+  )
+
+t_test_biomass <- t.test(total_yield ~ treatment, data = df_biomass, var.equal = TRUE)
+print(t_test_biomass)
+
+df_biomass_summary <- df_biomass %>%
+  group_by(treatment) %>%
+  summarise(
+    Mean_Yield = mean(total_yield),
+    SEM_Yield  = sd(total_yield) / sqrt(n()),
+    .groups = "drop"
+  )
+
+plot_biomass <- ggplot(df_biomass_summary, aes(x = treatment, y = Mean_Yield, fill = treatment)) +
+  geom_bar(stat = "identity", width = 0.4, color = "black", show.legend = FALSE) +
+  geom_errorbar(aes(ymin = Mean_Yield - SEM_Yield, ymax = Mean_Yield + SEM_Yield), width = 0.1) +
+  scale_fill_manual(values = c("Low light intensity" = "#74c476", "High light intensity" = "#238b45")) +
+  labs(
+    title = "Total Duckweed Biomass Yield After 9 Days",
+    x = "Treatment",
+    y = "Net Biomass Yield (grams)"
+  ) +
+  theme_minimal() +
+  theme(panel.grid.major.x = element_blank())
+
+ggsave("output/plots/plot_biomass.png", plot = plot_biomass, width = 5, height = 4, dpi = 300)
